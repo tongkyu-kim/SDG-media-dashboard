@@ -3,1535 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Korea Media Coverage & SDG Funding Dashboard</title>
-    
-    <!-- External Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.26.0/plotly.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
+    <title>SDG Media & ODA Dashboard</title>
     <style>
         :root {
-            --primary-color: #2563eb;
-            --secondary-color: #10b981;
-            --accent-color: #f59e0b;
-            --danger-color: #ef4444;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-card: #ffffff;
-            --border-color: #e5e7eb;
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --primary: #009EDB;
+            --background: #FFFFFF;
+            --text: #000000;
+            --accent: #F2F2F0;
         }
-
-        * {
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            font-family: Calibri, Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
         }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-
-        .container {
-            max-width: 1400px;
+        .navbar {
+            background: #F2F2F0;
+            color: #000;
+            padding: 0.5rem 0;
+            box-shadow: 0 2px 8px #0001;
+        }
+        .navbar-container {
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--primary-color), #1e40af);
-            color: white;
-            padding: 2rem 0;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        /* File Upload Section */
-        .upload-section {
-            background: var(--bg-card);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-        }
-
-        .upload-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .upload-area {
-            border: 2px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .upload-area:hover {
-            border-color: var(--primary-color);
-            background-color: rgba(37, 99, 235, 0.05);
-        }
-
-        .upload-area.dragover {
-            border-color: var(--primary-color);
-            background-color: rgba(37, 99, 235, 0.1);
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-        }
-
-        .upload-text {
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .upload-btn {
-            background: var(--primary-color);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s ease;
-        }
-
-        .upload-btn:hover {
-            background: #1d4ed8;
-        }
-
-        /* Status Messages */
-        .status-message {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            display: none;
-        }
-
-        .status-success {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        .status-error {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
-
-        /* Metrics Cards */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .metric-card {
-            background: var(--bg-card);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            border-left: 4px solid var(--primary-color);
-            transition: transform 0.3s ease;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-label {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        /* Cards */
-        .card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .card-header {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
         }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .card-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
+        .navbar-links {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: white;
+            gap: 2rem;
         }
-
-        /* Chart Containers */
-        .chart-container {
-            height: 400px;
-            margin-top: 1rem;
+        .navbar-link {
+            color: #000;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: calc(0.77rem + 3pt); /* 0.77rem + 3pt for increased size */
+            padding: 0.25rem 0.5rem 0.15rem 0.5rem;
+            border-radius: 0;
+            border-bottom: 3px solid transparent;
+            background: none;
+            transition: border-bottom 0.2s, color 0.2s;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
-
-        .chart-large {
-            height: 500px;
+        .navbar-link.active, .navbar-link:hover {
+            border-bottom: 3px solid #009EDB;
+            background: none;
+            color: #000;
         }
-
-        /* Loading States */
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-            color: var(--text-secondary);
+        .header {
+            background: var(--accent);
+            padding: 2rem 0 1rem 0;
+            text-align: center;
         }
-
-        .spinner {
-            border: 2px solid var(--border-color);
-            border-top: 2px solid var(--primary-color);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            margin-right: 0.5rem;
+        .header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.54rem;
+            font-weight: 700;
+            color: var(--primary);
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .header p {
+            margin: 0;
+            color: #333;
+            font-size: 0.77rem;
         }
-
-        /* Data Table */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--bg-card);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            margin-top: 1rem;
+        .container {
+            max-width: none;
+            width: 80vw;
+            min-width: 320px;
+            margin: 0 auto;
+            padding: 2rem 1rem 3rem 1rem;
+            flex: 1 1 auto;
+            font-size: 0.77rem;
         }
-
-        .data-table th,
-        .data-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.875rem;
-        }
-
-        .data-table th {
-            background: var(--bg-secondary);
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .data-table tr:hover {
-            background: rgba(37, 99, 235, 0.05);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .upload-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Hide elements initially */
-        .dashboard-content {
+        .page {
             display: none;
         }
-
-        /* SDG Colors - Official UN SDG Color Palette */
-        .sdg-1 { background-color: #E5243B; }
-        .sdg-2 { background-color: #DDA63A; }
-        .sdg-3 { background-color: #4C9F38; }
-        .sdg-4 { background-color: #C5192D; }
-        .sdg-5 { background-color: #FF3A21; }
-        .sdg-6 { background-color: #26BDE2; }
-        .sdg-7 { background-color: #FCC30B; }
-        .sdg-8 { background-color: #A21942; }
-        .sdg-9 { background-color: #FD6925; }
-        .sdg-10 { background-color: #DD1367; }
-        .sdg-11 { background-color: #FD9D24; }
-        .sdg-12 { background-color: #BF8B2E; }
-        .sdg-13 { background-color: #3F7E44; }
-        .sdg-14 { background-color: #0A97D9; }
-        .sdg-15 { background-color: #56C02B; }
-        .sdg-16 { background-color: #00689D; }
-        .sdg-17 { background-color: #19486A; }
-
-        /* SDG Badge Styles */
-        .sdg-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-align: center;
-            margin: 0.125rem;
+        .page.active {
+            display: block;
+            animation: fadein 0.3s;
         }
-
-        /* SDG Grid for visual display */
+        @keyframes fadein {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .placeholder {
+            background: var(--accent);
+            border-radius: 12px;
+            padding: 3rem 1rem;
+            text-align: center;
+            color: #888;
+            font-size: 1.3rem;
+            margin-top: 2rem;
+        }
+        /* SDG Grid Styles */
         .sdg-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin: 1rem 0;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2.5rem 2rem;
+            margin: 2rem 0 0 0;
+            justify-items: center;
         }
-
         .sdg-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            transition: transform 0.2s ease;
-        }
-
-        .sdg-item:hover {
-            transform: scale(1.02);
-        }
-
-        .sdg-number {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-right: 0.75rem;
-            min-width: 2rem;
-        }
-
-        /* Heatmap specific styles */
-        .heatmap-container {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 8px;
-        }
-
-        .heatmap-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-        }
-
-        .heatmap-section {
-            text-align: center;
-            background: var(--bg-primary);
-            border-radius: 8px;
-            padding: 1rem;
-            box-shadow: var(--shadow);
-        }
-
-        .heatmap-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            background: linear-gradient(135deg, var(--primary-color), #1e40af);
-            color: white;
-            border-radius: 8px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .heatmap-section .chart-container {
-            height: 420px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--bg-primary);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Enhanced loading states for heatmaps */
-        .heatmap-section .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: var(--text-secondary);
+            background: none;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0;
+            width: 210px;
+            min-height: 210px;
+            transition: box-shadow 0.2s;
         }
-
-        /* Responsive heatmap layout */
-        @media (max-width: 1400px) {
-            .heatmap-grid {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-            
-            .heatmap-section .chart-container {
-                height: 500px;
-            }
+        .sdg-item img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            margin-bottom: 0;
+            border-radius: 0;
+            background: none;
+            box-shadow: none;
         }
-
-        @media (max-width: 768px) {
-            .heatmap-container {
-                padding: 0.5rem;
-            }
-            
-            .heatmap-section {
-                padding: 0.5rem;
-            }
-            
-            .heatmap-title {
-                font-size: 1rem;
-                padding: 0.5rem;
-            }
-            
-            .heatmap-section .chart-container {
-                height: 400px;
-            }
+        .sdg-label { display: none; }
+        @media (max-width: 1200px) {
+            .sdg-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .sdg-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .sdg-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 700px) {
+            .container { padding: 1rem 0.5rem; }
+            .header h1 { font-size: 1.3rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <h1><i class="fas fa-chart-line"></i> Korea Media Coverage & SDG Funding Dashboard</h1>
-            <p>Monthly analysis of correlation between Korean media attention and sustainable development funding allocation patterns</p>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main">
-        <div class="container">
-            <!-- File Upload Section -->
-            <section class="upload-section">
-                <h2 style="margin-bottom: 2rem; color: var(--text-primary);">Data Sources</h2>
-                <div class="upload-grid">
-                    <!-- ODA Data Upload -->
-                    <div class="upload-area" id="oda-upload-area">
-                        <div class="upload-icon">
-                            <i class="fas fa-file-csv"></i>
-                        </div>
-                        <div class="upload-text">
-                            <strong>ODA Dataset (CSV)</strong><br>
-                            Upload the Korean ODA dataset file
-                        </div>
-                        <input type="file" id="oda-file-input" class="file-input" accept=".csv" />
-                        <button class="upload-btn" onclick="document.getElementById('oda-file-input').click()">
-                            <i class="fas fa-upload"></i> Select ODA File
-                        </button>
-                        <div id="oda-status" class="status-message"></div>
-                    </div>
-
-                    <!-- News Data Upload -->
-                    <div class="upload-area" id="news-upload-area">
-                        <div class="upload-icon">
-                            <i class="fas fa-file-excel"></i>
-                        </div>
-                        <div class="upload-text">
-                            <strong>News Dataset (XLSX)</strong><br>
-                            Upload the 2012 Korean news data file
-                        </div>
-                        <input type="file" id="news-file-input" class="file-input" accept=".xlsx,.xls" />
-                        <button class="upload-btn" onclick="document.getElementById('news-file-input').click()">
-                            <i class="fas fa-upload"></i> Select News File
-                        </button>
-                        <div id="news-status" class="status-message"></div>
-                    </div>
-                </div>
-
-                <!-- Quick Load Local Files Button -->
-                <div style="text-align: center; margin-top: 2rem;">
-                    <button class="upload-btn" id="load-local-data" style="background: var(--secondary-color);">
-                        <i class="fas fa-database"></i> Load Local Data Files
-                    </button>
-                    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.875rem;">
-                        Load data from ../src/oda/oda_korea_dataset.csv and ../src/raw/2012.xlsx
-                    </p>
-                </div>
-            </section>
-
-            <!-- Dashboard Content (Initially Hidden) -->
-            <div class="dashboard-content">
-                <!-- SDG Overview Section -->
-                <section class="card" style="margin-bottom: 3rem;">
-                    <div class="card-header">
-                        <h3 class="card-title">Sustainable Development Goals Overview</h3>
-                        <div class="card-icon" style="background: var(--accent-color);">
-                            <i class="fas fa-globe"></i>
-                        </div>
-                    </div>
-                    <div class="sdg-grid" id="sdg-overview">
-                        <!-- SDG items will be populated by JavaScript -->
-                    </div>
-                </section>
-
-                <!-- Key Metrics -->
-                <section class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-value" id="total-projects">-</div>
-                        <div class="metric-label">Total ODA Projects</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value" id="total-funding">-</div>
-                        <div class="metric-label">Total Funding (USD)</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value" id="news-articles">-</div>
-                        <div class="metric-label">News Articles (2012)</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value" id="correlation-score">-</div>
-                        <div class="metric-label">Media-Funding Correlation</div>
-                    </div>
-                </section>
-
-                <!-- Dashboard Grid -->
-                <div class="dashboard-grid">
-                    <!-- Funding Heatmap Analysis - 3 heatmaps in a row -->
-                    <div class="card" style="grid-column: span 3;">
-                        <div class="card-header">
-                            <h3 class="card-title">Media Coverage Impact on SDG Funding Allocation</h3>
-                            <div class="card-icon" style="background: var(--primary-color);">
-                                <i class="fas fa-chart-area"></i>
-                            </div>
-                        </div>
-                        <div class="heatmap-container">
-                            <div class="heatmap-grid">
-                                <div class="heatmap-section">
-                                    <div class="heatmap-title">Immediate Response (1-6 months)</div>
-                                    <div class="chart-container" id="heatmap-immediate">
-                                        <div class="loading">
-                                            <div class="spinner"></div>
-                                            Loading immediate response data...
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="heatmap-section">
-                                    <div class="heatmap-title">Medium Term (6 months - 2 years)</div>
-                                    <div class="chart-container" id="heatmap-medium">
-                                        <div class="loading">
-                                            <div class="spinner"></div>
-                                            Loading medium term data...
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="heatmap-section">
-                                    <div class="heatmap-title">Long Term (2-5 years)</div>
-                                    <div class="chart-container" id="heatmap-long">
-                                        <div class="loading">
-                                            <div class="spinner"></div>
-                                            Loading long term data...
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Correlation Analysis -->
-                    <div class="card" style="grid-column: span 2;">
-                        <div class="card-header">
-                            <h3 class="card-title">Media Coverage vs ODA Funding Correlation</h3>
-                            <div class="card-icon" style="background: var(--primary-color);">
-                                <i class="fas fa-chart-scatter"></i>
-                            </div>
-                        </div>
-                        <div class="chart-container chart-large" id="correlation-chart">
-                            <div class="loading">
-                                <div class="spinner"></div>
-                                Upload data files to view correlation analysis
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ODA Projects by Year -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">ODA Projects Timeline</h3>
-                            <div class="card-icon" style="background: var(--secondary-color);">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                        </div>
-                        <div class="chart-container" id="timeline-chart">
-                            <div class="loading">
-                                <div class="spinner"></div>
-                                Upload ODA data to view timeline
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SDG Distribution -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">SDG Focus Distribution</h3>
-                            <div class="card-icon" style="background: var(--accent-color);">
-                                <i class="fas fa-chart-pie"></i>
-                            </div>
-                        </div>
-                        <div class="chart-container" id="sdg-chart">
-                            <div class="loading">
-                                <div class="spinner"></div>
-                                Upload ODA data to view SDG distribution
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- News Sentiment Analysis -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">News Coverage Analysis</h3>
-                            <div class="card-icon" style="background: #8b5cf6;">
-                                <i class="fas fa-newspaper"></i>
-                            </div>
-                        </div>
-                        <div class="chart-container" id="news-chart">
-                            <div class="loading">
-                                <div class="spinner"></div>
-                                Upload news data to view analysis
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Regional Distribution -->
-                    <div class="card" style="grid-column: span 2;">
-                        <div class="card-header">
-                            <h3 class="card-title">ODA by Recipient Countries</h3>
-                            <div class="card-icon" style="background: #06b6d4;">
-                                <i class="fas fa-globe"></i>
-                            </div>
-                        </div>
-                        <div class="chart-container" id="regional-chart">
-                            <div class="loading">
-                                <div class="spinner"></div>
-                                Upload ODA data to view regional distribution
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Data Preview Tables -->
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">ODA Data Preview</h3>
-                        </div>
-                        <div style="overflow-x: auto; max-height: 400px;">
-                            <table class="data-table" id="oda-preview-table">
-                                <thead>
-                                    <tr>
-                                        <th>Project</th>
-                                        <th>Year</th>
-                                        <th>Recipient</th>
-                                        <th>Amount (USD)</th>
-                                        <th>SDG Focus</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                                            Upload ODA data to preview
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">News Data Preview</h3>
-                        </div>
-                        <div style="overflow-x: auto; max-height: 400px;">
-                            <table class="data-table" id="news-preview-table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Title</th>
-                                        <th>Category</th>
-                                        <th>Keywords</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                                            Upload news data to preview
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-links">
+                <a href="#overview" class="navbar-link active" id="nav-overview">Overview</a>
+                <a href="#oda" class="navbar-link" id="nav-oda">ODA</a>
+                <a href="#news" class="navbar-link" id="nav-news">News</a>
+                <a href="#method" class="navbar-link" id="nav-method">Method</a>
             </div>
         </div>
+    </nav>
+    <header class="header">
+        <h1>SDG Media & ODA</h1>
+        <p>Correlating Korean media and ODA budgeting</p>
+    </header>
+    <main class="container">
+        <section class="page active" id="page-overview">
+            <div class="sdg-grid" id="sdg-grid"></div>
+        </section>
+        <section class="page" id="page-oda">
+            <div id="oda-content"></div>
+        </section>
+        <section class="page" id="page-news">
+            <div class="placeholder">News<br><span style="font-size:1rem;">(News & SDG analysis will appear here)</span></div>
+        </section>
+        <section class="page" id="page-method">
+            <div class="placeholder">Methodology<br><span style="font-size:1rem;">(Methodology details will appear here)</span></div>
+        </section>
     </main>
-
-    <!-- JavaScript -->
     <script>
-        // Global variables to store data
-        let odaData = null;
-        let newsData = null;
-
-        // SDG Definitions with official colors and titles
-        const SDG_DEFINITIONS = {
-            1: { color: '#E5243B', title: 'No Poverty', description: 'End poverty in all its forms everywhere' },
-            2: { color: '#DDA63A', title: 'Zero Hunger', description: 'End hunger, achieve food security and improved nutrition and promote sustainable agriculture' },
-            3: { color: '#4C9F38', title: 'Good Health and Well-being', description: 'Ensure healthy lives and promote well-being for all at all ages' },
-            4: { color: '#C5192D', title: 'Quality Education', description: 'Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all' },
-            5: { color: '#FF3A21', title: 'Gender Equality', description: 'Achieve gender equality and empower all women and girls' },
-            6: { color: '#26BDE2', title: 'Clean Water and Sanitation', description: 'Ensure availability and sustainable management of water and sanitation for all' },
-            7: { color: '#FCC30B', title: 'Affordable and Clean Energy', description: 'Ensure access to affordable, reliable, sustainable and modern energy for all' },
-            8: { color: '#A21942', title: 'Decent Work and Economic Growth', description: 'Promote sustained, inclusive and sustainable economic growth, full and productive employment and decent work for all' },
-            9: { color: '#FD6925', title: 'Industry, Innovation and Infrastructure', description: 'Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation' },
-            10: { color: '#DD1367', title: 'Reduced Inequalities', description: 'Reduce inequality within and among countries' },
-            11: { color: '#FD9D24', title: 'Sustainable Cities and Communities', description: 'Make cities and human settlements inclusive, safe, resilient and sustainable' },
-            12: { color: '#BF8B2E', title: 'Responsible Consumption and Production', description: 'Ensure sustainable consumption and production patterns' },
-            13: { color: '#3F7E44', title: 'Climate Action', description: 'Take urgent action to combat climate change and its impacts' },
-            14: { color: '#0A97D9', title: 'Life Below Water', description: 'Conserve and sustainably use the oceans, seas and marine resources for sustainable development' },
-            15: { color: '#56C02B', title: 'Life on Land', description: 'Protect, restore and promote sustainable use of terrestrial ecosystems, sustainably manage forests, combat desertification, and halt and reverse land degradation and halt biodiversity loss' },
-            16: { color: '#00689D', title: 'Peace, Justice and Strong Institutions', description: 'Promote peaceful and inclusive societies for sustainable development, provide access to justice for all and build effective, accountable and inclusive institutions at all levels' },
-            17: { color: '#19486A', title: 'Partnerships for the Goals', description: 'Strengthen the means of implementation and revitalize the global partnership for sustainable development' }
+        // Navigation logic
+        const navLinks = document.querySelectorAll('.navbar-link');
+        const pages = {
+            overview: document.getElementById('page-overview'),
+            oda: document.getElementById('page-oda'),
+            news: document.getElementById('page-news'),
+            method: document.getElementById('page-method')
         };
-
-        // Utility function to get SDG color
-        function getSDGColor(sdgNumber) {
-            return SDG_DEFINITIONS[sdgNumber]?.color || '#6b7280';
+        function showPage(page) {
+            Object.values(pages).forEach(p => p.classList.remove('active'));
+            if (pages[page]) pages[page].classList.add('active');
+            navLinks.forEach(link => link.classList.remove('active'));
+            const nav = document.getElementById('nav-' + page);
+            if (nav) nav.classList.add('active');
         }
-
-        // Utility function to get SDG title
-        function getSDGTitle(sdgNumber) {
-            return SDG_DEFINITIONS[sdgNumber]?.title || `SDG ${sdgNumber}`;
-        }
-
-        // Utility function to create SDG badge HTML
-        function createSDGBadge(sdgNumber, showTitle = true) {
-            const sdg = SDG_DEFINITIONS[sdgNumber];
-            if (!sdg) return `<span class="sdg-badge" style="background-color: #6b7280;">SDG ${sdgNumber}</span>`;
-            
-            const title = showTitle ? `: ${sdg.title}` : '';
-            return `<span class="sdg-badge" style="background-color: ${sdg.color};">SDG ${sdgNumber}${title}</span>`;
-        }
-
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            setupFileHandlers();
-            setupLocalDataLoader();
-            createSDGOverview();
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.id.replace('nav-', '');
+                showPage(page);
+                window.location.hash = page;
+            });
         });
+        window.addEventListener('hashchange', function() {
+            const hash = location.hash.replace('#', '');
+            if (pages[hash]) showPage(hash);
+        });
+        // Initial page
+        const initial = location.hash.replace('#', '') || 'overview';
+        if (pages[initial]) showPage(initial);
 
-        function createSDGOverview() {
-            const sdgOverview = document.getElementById('sdg-overview');
-            const sdgHTML = Object.entries(SDG_DEFINITIONS).map(([number, sdg]) => `
-                <div class="sdg-item" style="background-color: ${sdg.color};">
-                    <div class="sdg-number">${number}</div>
-                    <div>
-                        <div style="font-weight: 600; margin-bottom: 0.25rem;">${sdg.title}</div>
-                        <div style="font-size: 0.875rem; opacity: 0.9;">${sdg.description.substring(0, 100)}...</div>
+        // SDG icon and label data
+        const SDG_ICONS = [
+            { num: 1, label: 'No Poverty' },
+            { num: 2, label: 'Zero Hunger' },
+            { num: 3, label: 'Good Health' },
+            { num: 4, label: 'Quality Education' },
+            { num: 5, label: 'Gender Equality' },
+            { num: 6, label: 'Clean Water' },
+            { num: 7, label: 'Clean Energy' },
+            { num: 8, label: 'Decent Work' },
+            { num: 9, label: 'Industry & Innovation' },
+            { num: 10, label: 'Reduced Inequality' },
+            { num: 11, label: 'Sustainable Cities' },
+            { num: 12, label: 'Responsible Consumption' },
+            { num: 13, label: 'Climate Action' },
+            { num: 14, label: 'Life Below Water' },
+            { num: 15, label: 'Life on Land' },
+            { num: 16, label: 'Peace & Justice' },
+            { num: 17, label: 'Partnerships' }
+        ];
+        function renderSDGGrid() {
+            const grid = document.getElementById('sdg-grid');
+            grid.innerHTML = SDG_ICONS.map(sdg => {
+                const num = String(sdg.num).padStart(2, '0');
+                const iconPath = `src/img/sdg_web/E-WEB-Goal-${num}.png`;
+                return `
+                    <div class="sdg-item">
+                        <img src="${iconPath}" alt="SDG ${sdg.num}" onerror="this.style.opacity=0.3;this.src='';">
                     </div>
-                </div>
-            `).join('');
-            
-            sdgOverview.innerHTML = sdgHTML;
+                `;
+            }).join('');
         }
-
-        function setupFileHandlers() {
-            // ODA file handler
-            const odaFileInput = document.getElementById('oda-file-input');
-            const odaUploadArea = document.getElementById('oda-upload-area');
-
-            odaFileInput.addEventListener('change', function(e) {
-                if (e.target.files.length > 0) {
-                    handleODAFile(e.target.files[0]);
-                }
-            });
-
-            // News file handler
-            const newsFileInput = document.getElementById('news-file-input');
-            const newsUploadArea = document.getElementById('news-upload-area');
-
-            newsFileInput.addEventListener('change', function(e) {
-                if (e.target.files.length > 0) {
-                    handleNewsFile(e.target.files[0]);
-                }
-            });
-
-            // Drag and drop functionality
-            setupDragAndDrop(odaUploadArea, handleODAFile);
-            setupDragAndDrop(newsUploadArea, handleNewsFile);
-        }
-
-        function setupDragAndDrop(area, handler) {
-            area.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                area.classList.add('dragover');
-            });
-
-            area.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                area.classList.remove('dragover');
-            });
-
-            area.addEventListener('drop', function(e) {
-                e.preventDefault();
-                area.classList.remove('dragover');
-                if (e.dataTransfer.files.length > 0) {
-                    handler(e.dataTransfer.files[0]);
-                }
-            });
-        }
-
-        function setupLocalDataLoader() {
-            // Auto-load data on page load since files are always in GitHub src
-            document.getElementById('load-local-data').addEventListener('click', function() {
-                loadDataFromGitHubSrc();
-            });
-            
-            // Auto-load data when page loads
-            setTimeout(() => {
-                loadDataFromGitHubSrc();
-            }, 500);
-        }
-
-        function loadDataFromGitHubSrc() {
-            showStatus('oda-status', 'Loading ODA dataset from GitHub src...', 'success');
-            showStatus('news-status', 'Loading news dataset from GitHub src...', 'success');
-            
-            // Since we can't directly access local files via JavaScript for security reasons,
-            // we'll simulate loading with comprehensive sample data that represents the actual structure
-            setTimeout(() => {
-                loadComprehensiveODAData();
-                loadComprehensiveNewsData();
-                showDashboard();
-            }, 1000);
-        }
-
-        function handleODAFile(file) {
-            showStatus('oda-status', 'Processing ODA file...', 'success');
-            
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    if (results.errors.length > 0) {
-                        showStatus('oda-status', 'Error parsing CSV file', 'error');
-                        return;
-                    }
-                    
-                    odaData = results.data;
-                    showStatus('oda-status', `Successfully loaded ${odaData.length} ODA records`, 'success');
-                    updateODAMetrics();
-                    updateODACharts();
-                    updateODAPreview();
-                    
-                    if (newsData) {
-                        updateCorrelationAnalysis();
-                    }
-                    
-                    showDashboard();
-                },
-                error: function(error) {
-                    showStatus('oda-status', 'Error reading file: ' + error.message, 'error');
-                }
-            });
-        }
-
-        function handleNewsFile(file) {
-            showStatus('news-status', 'Processing news file...', 'success');
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                    
-                    newsData = jsonData;
-                    showStatus('news-status', `Successfully loaded ${newsData.length} news records`, 'success');
-                    updateNewsMetrics();
-                    updateNewsCharts();
-                    updateNewsPreview();
-                    
-                    if (odaData) {
-                        updateCorrelationAnalysis();
-                    }
-                    
-                    showDashboard();
-                } catch (error) {
-                    showStatus('news-status', 'Error processing Excel file: ' + error.message, 'error');
-                }
-            };
-            
-            reader.readAsArrayBuffer(file);
-        }
-
-        function loadComprehensiveODAData() {
-            // Generate comprehensive ODA data with monthly granularity for better correlation analysis
-            odaData = [];
-            
-            // Extended timeframe: 2010-2022 with monthly precision
-            const startYear = 2010;
-            const endYear = 2022;
-            const countries = [
-                'Cambodia', 'Vietnam', 'Philippines', 'Indonesia', 'Thailand', 'Myanmar', 'Laos',
-                'Ghana', 'Nigeria', 'Kenya', 'Tanzania', 'Rwanda', 'Senegal', 'Ethiopia',
-                'Bangladesh', 'Nepal', 'Pakistan', 'Sri Lanka', 'Afghanistan',
-                'Bolivia', 'Peru', 'Ecuador', 'Colombia', 'Paraguay',
-                'Morocco', 'Egypt', 'Tunisia', 'Jordan',
-                'Pacific Islands', 'Papua New Guinea', 'Fiji'
-            ];
-
-            let projectCounter = 1;
-
-            for (let year = startYear; year <= endYear; year++) {
-                for (let month = 1; month <= 12; month++) {
-                    // Generate projects for each SDG with monthly distribution
-                    for (let sdg = 1; sdg <= 17; sdg++) {
-                        // Generate 0-3 projects per SDG per month (more realistic distribution)
-                        const projectsPerMonth = Math.floor(Math.random() * 4);
-                        
-                        for (let p = 0; p < projectsPerMonth; p++) {
-                            const country = countries[Math.floor(Math.random() * countries.length)];
-                            const baseAmount = getSDGBaseAmount(sdg) * (Math.random() * 0.8 + 0.6);
-                            const commitment = Math.floor(baseAmount * 1000) * 1000; // Round to thousands
-                            const day = Math.floor(Math.random() * 28) + 1;
-                            
-                            odaData.push({
-                                project_number: `KOR-${String(projectCounter).padStart(6, '0')}`,
-                                year: year.toString(),
-                                month: String(month).padStart(2, '0'),
-                                date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
-                                project_title: generateProjectTitle(sdg, country),
-                                recipient_name: country,
-                                usd_commitment: commitment.toString(),
-                                sdg_focus: sdg.toString(),
-                                donor_name: 'Republic of Korea'
-                            });
-                            
-                            projectCounter++;
-                        }
-                    }
-                }
-            }
-            
-            updateODAMetrics();
-            updateODACharts();
-            updateODAPreview();
-        }
-
-        function loadComprehensiveNewsData() {
-            // Generate comprehensive monthly news data for 2012 covering all SDG topics
-            newsData = [];
-            const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-            
-            // Generate news articles for each SDG throughout 2012 with seasonal patterns
-            for (let sdg = 1; sdg <= 17; sdg++) {
-                months.forEach((month, monthIndex) => {
-                    // Vary articles per month based on seasonal patterns and SDG relevance
-                    let baseArticles = Math.floor(Math.random() * 6) + 3; // 3-8 base articles
-                    
-                    // Add seasonal boost for certain SDGs
-                    if ((sdg === 13 || sdg === 14 || sdg === 15) && (monthIndex >= 9 || monthIndex <= 2)) {
-                        baseArticles += 2; // Environmental SDGs get more coverage in winter/spring
-                    }
-                    if ((sdg === 2) && (monthIndex >= 6 && monthIndex <= 8)) {
-                        baseArticles += 3; // Food security gets more coverage during harvest season
-                    }
-                    if ((sdg === 1 || sdg === 10) && (monthIndex === 11 || monthIndex === 0)) {
-                        baseArticles += 2; // Poverty/inequality coverage increases around year-end
-                    }
-                    
-                    for (let a = 0; a < baseArticles; a++) {
-                        const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
-                        const intensity = Math.random() * 5 + 1; // Article impact intensity (1-6 scale)
-                        
-                        newsData.push({
-                            date: `2012-${month}-${day}`,
-                            month: month,
-                            title: generateNewsTitle(sdg),
-                            category: getNewsCategory(sdg),
-                            keywords: generateKeywords(sdg),
-                            sdg_focus: sdg,
-                            sentiment: Math.random() > 0.3 ? 'positive' : Math.random() > 0.5 ? 'neutral' : 'negative',
-                            impact_score: intensity, // Added impact scoring for better correlation
-                            coverage_type: Math.random() > 0.7 ? 'major' : Math.random() > 0.4 ? 'moderate' : 'minor'
-                        });
-                    }
-                });
-            }
-            
-            updateNewsMetrics();
-            updateNewsCharts();
-            updateNewsPreview();
-        }
-
-        function getSDGBaseAmount(sdg) {
-            // Different base funding amounts for different SDGs (in USD)
-            const baseAmounts = {
-                1: 2500000,   // No Poverty
-                2: 3200000,   // Zero Hunger  
-                3: 4500000,   // Good Health
-                4: 3800000,   // Quality Education
-                5: 2100000,   // Gender Equality
-                6: 3600000,   // Clean Water
-                7: 4200000,   // Clean Energy
-                8: 3000000,   // Economic Growth
-                9: 3500000,   // Innovation & Infrastructure
-                10: 1800000,  // Reduced Inequalities
-                11: 4000000,  // Sustainable Cities
-                12: 2800000,  // Responsible Consumption
-                13: 5000000,  // Climate Action
-                14: 3300000,  // Life Below Water
-                15: 3700000,  // Life on Land
-                16: 2200000,  // Peace & Justice
-                17: 2600000   // Partnerships
-            };
-            return baseAmounts[sdg] || 3000000;
-        }
-
-        function generateProjectTitle(sdg, country) {
-            const projectTitles = {
-                1: [`Poverty Reduction Initiative in ${country}`, `Economic Empowerment Program ${country}`, `Microfinance Development ${country}`],
-                2: [`Agricultural Development Program ${country}`, `Food Security Initiative ${country}`, `Rural Nutrition Project ${country}`],
-                3: [`Healthcare Infrastructure ${country}`, `Primary Health Care Program ${country}`, `Medical Equipment Modernization ${country}`],
-                4: [`Education Infrastructure ${country}`, `Digital Learning Initiative ${country}`, `Teacher Training Program ${country}`],
-                5: [`Women Empowerment Program ${country}`, `Gender Equality Initiative ${country}`, `Women's Economic Participation ${country}`],
-                6: [`Water Supply and Sanitation ${country}`, `Clean Water Access Project ${country}`, `Water Infrastructure Development ${country}`],
-                7: [`Renewable Energy Development ${country}`, `Solar Power Initiative ${country}`, `Energy Access Program ${country}`],
-                8: [`Economic Growth Support ${country}`, `Job Creation Initiative ${country}`, `SME Development Program ${country}`],
-                9: [`Infrastructure Modernization ${country}`, `Innovation Hub Development ${country}`, `Technology Transfer Program ${country}`],
-                10: [`Social Inclusion Program ${country}`, `Inequality Reduction Initiative ${country}`, `Vulnerable Groups Support ${country}`],
-                11: [`Urban Development Program ${country}`, `Smart City Initiative ${country}`, `Sustainable Transportation ${country}`],
-                12: [`Sustainable Production Program ${country}`, `Waste Management Initiative ${country}`, `Circular Economy Project ${country}`],
-                13: [`Climate Adaptation Program ${country}`, `Carbon Reduction Initiative ${country}`, `Climate Resilience Project ${country}`],
-                14: [`Marine Conservation Program ${country}`, `Fisheries Management ${country}`, `Ocean Protection Initiative ${country}`],
-                15: [`Forest Conservation Program ${country}`, `Biodiversity Protection ${country}`, `Land Restoration Project ${country}`],
-                16: [`Peace Building Initiative ${country}`, `Governance Support Program ${country}`, `Justice System Development ${country}`],
-                17: [`Partnership Development ${country}`, `Capacity Building Program ${country}`, `Knowledge Sharing Initiative ${country}`]
-            };
-            
-            const titles = projectTitles[sdg] || [`Development Program ${country}`];
-            return titles[Math.floor(Math.random() * titles.length)];
-        }
-
-        function generateNewsTitle(sdg) {
-            const newsTitles = {
-                1: ['Korea expands poverty reduction programs', 'New microfinance initiatives launched', 'Economic empowerment for vulnerable communities'],
-                2: ['Korean agricultural aid reaches rural areas', 'Food security programs show results', 'Sustainable farming techniques introduced'],
-                3: ['Korean medical team provides healthcare', 'Hospital equipment donated to developing nations', 'Health infrastructure projects initiated'],
-                4: ['Education partnership agreements signed', 'Digital learning platforms introduced', 'Teacher exchange programs launched'],
-                5: ['Women leadership programs expand', 'Gender equality initiatives gain momentum', 'Female entrepreneurship support increases'],
-                6: ['Clean water projects inaugurated', 'Sanitation infrastructure completed', 'Water access programs reach remote areas'],
-                7: ['Solar energy projects launched', 'Renewable energy partnerships formed', 'Clean energy technology transferred'],
-                8: ['Economic cooperation agreements signed', 'Job training programs initiated', 'Small business support expanded'],
-                9: ['Infrastructure development projects begin', 'Technology innovation hubs established', 'Research collaboration increases'],
-                10: ['Social inclusion programs launched', 'Support for marginalized communities', 'Inequality reduction measures implemented'],
-                11: ['Urban planning cooperation increases', 'Smart city technologies shared', 'Sustainable development projects'],
-                12: ['Sustainable production methods introduced', 'Waste management systems improved', 'Circular economy initiatives'],
-                13: ['Climate change adaptation programs', 'Carbon reduction commitments made', 'Environmental protection measures'],
-                14: ['Marine conservation efforts expand', 'Fisheries management programs', 'Ocean protection initiatives'],
-                15: ['Forest conservation projects launched', 'Biodiversity protection programs', 'Land restoration efforts'],
-                16: ['Peace building initiatives supported', 'Governance capacity building', 'Justice system improvements'],
-                17: ['Development partnerships strengthened', 'Knowledge sharing platforms created', 'Multilateral cooperation increases']
-            };
-            
-            const titles = newsTitles[sdg] || ['Development cooperation news'];
-            return titles[Math.floor(Math.random() * titles.length)];
-        }
-
-        function getNewsCategory(sdg) {
-            const categories = {
-                1: 'Economics', 2: 'Agriculture', 3: 'Health', 4: 'Education', 5: 'Social',
-                6: 'Environment', 7: 'Energy', 8: 'Economics', 9: 'Technology', 10: 'Social',
-                11: 'Urban', 12: 'Environment', 13: 'Environment', 14: 'Environment',
-                15: 'Environment', 16: 'Politics', 17: 'International'
-            };
-            return categories[sdg] || 'International';
-        }
-
-        function generateKeywords(sdg) {
-            const keywords = {
-                1: 'poverty, development, economic, assistance, Korea',
-                2: 'agriculture, food, farming, rural, nutrition',
-                3: 'health, medical, hospital, healthcare, treatment',
-                4: 'education, school, learning, training, knowledge',
-                5: 'women, gender, equality, empowerment, female',
-                6: 'water, sanitation, clean, infrastructure, access',
-                7: 'energy, renewable, solar, power, electricity',
-                8: 'economic, growth, jobs, employment, business',
-                9: 'technology, innovation, infrastructure, development',
-                10: 'inequality, social, inclusion, vulnerable, support',
-                11: 'urban, city, sustainable, development, planning',
-                12: 'sustainable, production, consumption, waste, circular',
-                13: 'climate, environment, carbon, adaptation, green',
-                14: 'marine, ocean, fisheries, conservation, blue',
-                15: 'forest, biodiversity, land, conservation, ecosystem',
-                16: 'peace, justice, governance, institutions, democracy',
-                17: 'partnership, cooperation, development, multilateral'
-            };
-            return keywords[sdg] || 'development, cooperation, Korea';
-        }
-
-        function showStatus(elementId, message, type) {
-            const statusElement = document.getElementById(elementId);
-            statusElement.textContent = message;
-            statusElement.className = `status-message status-${type}`;
-            statusElement.style.display = 'block';
-        }
-
-        function showDashboard() {
-            document.querySelector('.dashboard-content').style.display = 'block';
-        }
-
-        function updateODAMetrics() {
-            if (!odaData) return;
-            
-            document.getElementById('total-projects').textContent = odaData.length.toLocaleString();
-            
-            const totalFunding = odaData.reduce((sum, project) => {
-                return sum + (parseFloat(project.usd_commitment) || 0);
-            }, 0);
-            
-            document.getElementById('total-funding').textContent = '$' + (totalFunding / 1000000).toFixed(1) + 'M';
-        }
-
-        function updateNewsMetrics() {
-            if (!newsData) return;
-            
-            document.getElementById('news-articles').textContent = newsData.length.toLocaleString();
-        }
-
-        function updateCorrelationAnalysis() {
-            if (!odaData || !newsData) return;
-            
-            // Simple correlation calculation
-            const correlation = Math.random() * 0.3 + 0.4; // Placeholder
-            document.getElementById('correlation-score').textContent = correlation.toFixed(2);
-            
-            // Create correlation scatter plot
-            const trace = {
-                x: [120, 89, 156, 67, 134, 98, 145, 76, 112, 87],
-                y: [2400000, 1800000, 3100000, 1200000, 2800000, 2100000, 2900000, 1500000, 2300000, 1700000],
-                mode: 'markers',
-                type: 'scatter',
-                marker: {
-                    size: 12,
-                    color: '#2563eb'
-                }
-            };
-
-            Plotly.newPlot('correlation-chart', [trace], {
-                title: 'Media Mentions vs ODA Funding',
-                xaxis: { title: 'Media Mentions' },
-                yaxis: { title: 'ODA Funding (USD)' }
-            });
-        }
-
-        function updateODACharts() {
-            if (!odaData) return;
-            
-            // Update heatmaps first
-            updateFundingHeatmaps();
-            
-            // Timeline chart
-            const yearCounts = {};
-            odaData.forEach(project => {
-                const year = project.year;
-                yearCounts[year] = (yearCounts[year] || 0) + 1;
-            });
-            
-            const timelineTrace = {
-                x: Object.keys(yearCounts),
-                y: Object.values(yearCounts),
-                type: 'scatter',
-                mode: 'lines+markers',
-                line: { color: '#10b981' }
-            };
-            
-            Plotly.newPlot('timeline-chart', [timelineTrace], {
-                title: 'Projects by Year',
-                xaxis: { title: 'Year' },
-                yaxis: { title: 'Number of Projects' }
-            });
-            
-            // SDG distribution
-            const sdgCounts = {};
-            odaData.forEach(project => {
-                const sdg = project.sdg_focus || 'Unknown';
-                const sdgKey = sdg === 'Unknown' ? 'Unknown' : `SDG ${sdg}`;
-                sdgCounts[sdgKey] = (sdgCounts[sdgKey] || 0) + 1;
-            });
-            
-            // Prepare colors for the pie chart
-            const sdgLabels = Object.keys(sdgCounts);
-            const sdgValues = Object.values(sdgCounts);
-            const sdgColors = sdgLabels.map(label => {
-                if (label === 'Unknown') return '#6b7280';
-                const sdgNumber = label.replace('SDG ', '');
-                return getSDGColor(parseInt(sdgNumber));
-            });
-            
-            const sdgTrace = {
-                labels: sdgLabels,
-                values: sdgValues,
-                type: 'pie',
-                marker: {
-                    colors: sdgColors
-                },
-                textinfo: 'label+percent',
-                textposition: 'auto'
-            };
-            
-            Plotly.newPlot('sdg-chart', [sdgTrace], {
-                title: 'SDG Distribution',
-                showlegend: true,
-                legend: {
-                    orientation: 'v',
-                    x: 1,
-                    y: 0.5
-                }
-            });
-            
-            // Regional distribution
-            const regionCounts = {};
-            odaData.forEach(project => {
-                const recipient = project.recipient_name;
-                regionCounts[recipient] = (regionCounts[recipient] || 0) + 1;
-            });
-            
-            const topRegions = Object.entries(regionCounts)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 10);
-            
-            const regionalTrace = {
-                x: topRegions.map(([name]) => name),
-                y: topRegions.map(([,count]) => count),
-                type: 'bar',
-                marker: { color: '#06b6d4' }
-            };
-            
-            Plotly.newPlot('regional-chart', [regionalTrace], {
-                title: 'Top 10 Recipient Countries',
-                xaxis: { title: 'Country' },
-                yaxis: { title: 'Number of Projects' }
-            });
-        }
-
-        function updateFundingHeatmaps() {
-            if (!odaData || !newsData) return;
-            
-            // Generate 17x17 correlation matrices for new timeframes based on monthly data
-            const immediateData = generateHeatmapData('immediate');  // 1-6 months after news
-            const mediumData = generateHeatmapData('medium');        // 6 months - 2 years after news
-            const longData = generateHeatmapData('long');            // 2-5 years after news
-            
-            // Create the three heatmaps with new timeframes
-            createHeatmap('heatmap-immediate', immediateData, 'Immediate Response (1-6 months): Media Impact on Funding');
-            createHeatmap('heatmap-medium', mediumData, 'Medium Term (6 months - 2 years): Media Impact on Funding');
-            createHeatmap('heatmap-long', longData, 'Long Term (2-5 years): Media Impact on Funding');
-        }
-
-        function generateHeatmapData(timeframe) {
-            if (!newsData.length || !odaData.length) return { matrix: [], xLabels: [], yLabels: [] };
-            
-            // Create 17x17 matrix for SDG correlations
-            const matrix = Array(17).fill().map(() => Array(17).fill(0));
-            const xLabels = Array.from({length: 17}, (_, i) => `SDG ${i + 1}`);
-            const yLabels = Array.from({length: 17}, (_, i) => `SDG ${i + 1}`);
-            
-            // Calculate correlation matrix based on monthly news coverage and funding allocation
-            for (let newsSDG = 1; newsSDG <= 17; newsSDG++) {
-                for (let fundingSDG = 1; fundingSDG <= 17; fundingSDG++) {
-                    // Count monthly news coverage for this SDG in 2012
-                    const newsCount = newsData.filter(item => item.sdg_focus === newsSDG).length;
-                    
-                    // Get funding allocation for this SDG in the specified timeframe after 2012
-                    const fundingProjects = getFundingInTimeframe(fundingSDG, timeframe);
-                    
-                    // Calculate total funding amount
-                    const totalFunding = fundingProjects.reduce((sum, project) => 
-                        sum + parseInt(project.usd_commitment || 0), 0
-                    );
-                    
-                    // Normalize and calculate correlation score
-                    const newsNormalized = Math.min(newsCount / 10, 10); // Cap at 10 for scale
-                    const fundingNormalized = totalFunding / 1000000; // Convert to millions
-                    
-                    // Calculate correlation: higher when both news and funding are high
-                    let correlation = 0;
-                    if (newsSDG === fundingSDG) {
-                        // Same SDG: strong positive correlation
-                        correlation = Math.sqrt(newsNormalized * fundingNormalized) * 0.8 + 
-                                    Math.random() * 0.4; // Add some variation
-                    } else {
-                        // Different SDGs: calculate cross-correlation
-                        const similarity = calculateSDGSimilarity(newsSDG, fundingSDG);
-                        correlation = (newsNormalized * fundingNormalized * similarity) / 100 + 
-                                    Math.random() * 0.3; // Add variation
-                    }
-                    
-                    matrix[newsSDG - 1][fundingSDG - 1] = Math.min(correlation, 10);
-                }
-            }
-            
-            return { matrix, xLabels, yLabels };
-        }
-
-        function getFundingInTimeframe(sdgNumber, timeframe) {
-            // Define date ranges for each timeframe relative to 2012 news coverage
-            let startDate, endDate;
-            
-            switch(timeframe) {
-                case 'immediate': // 1-6 months after 2012
-                    startDate = new Date('2013-01-01');
-                    endDate = new Date('2013-06-30');
-                    break;
-                case 'medium': // 6 months - 2 years after 2012
-                    startDate = new Date('2013-07-01');
-                    endDate = new Date('2014-12-31');
-                    break;
-                case 'long': // 2-5 years after 2012
-                    startDate = new Date('2015-01-01');
-                    endDate = new Date('2017-12-31');
-                    break;
-                default:
-                    return [];
-            }
-            
-            return odaData.filter(project => {
-                if (project.sdg_focus !== sdgNumber.toString()) return false;
-                
-                const projectDate = new Date(project.date);
-                return projectDate >= startDate && projectDate <= endDate;
-            });
-        }
-
-        function calculateSDGSimilarity(sdg1, sdg2) {
-            // Define similarity matrix for SDGs based on thematic relationships
-            const sdgGroups = {
-                social: [1, 2, 3, 4, 5, 10, 16], // Social SDGs
-                environmental: [6, 13, 14, 15], // Environmental SDGs
-                economic: [7, 8, 9, 11, 12], // Economic SDGs
-                partnership: [17] // Partnership SDG
-            };
-            
-            // Find which groups each SDG belongs to
-            const getGroup = (sdg) => {
-                for (const [group, sdgs] of Object.entries(sdgGroups)) {
-                    if (sdgs.includes(sdg)) return group;
-                }
-                return 'other';
-            };
-            
-            const group1 = getGroup(sdg1);
-            const group2 = getGroup(sdg2);
-            
-            // Higher similarity within same group
-            if (group1 === group2) return 0.7;
-            
-            // Medium similarity between related groups
-            if ((group1 === 'social' && group2 === 'economic') || 
-                (group1 === 'economic' && group2 === 'social')) return 0.4;
-            if ((group1 === 'environmental' && group2 === 'economic') || 
-                (group1 === 'economic' && group2 === 'environmental')) return 0.3;
-            if (group1 === 'partnership' || group2 === 'partnership') return 0.6;
-            
-            // Lower similarity between distant groups
-            return 0.2;
-        }
-
-        function createHeatmap(containerId, data, title) {
-            if (!data.matrix || !data.matrix.length) {
-                document.getElementById(containerId).innerHTML = '<p class="text-gray-500">No data available</p>';
-                return;
-            }
-            
-            const trace = {
-                z: data.matrix,
-                x: data.xLabels,
-                y: data.yLabels,
-                type: 'heatmap',
-                colorscale: [
-                    [0, '#f8f9fa'],      // Very light gray for low values
-                    [0.2, '#e3f2fd'],    // Light blue
-                    [0.4, '#bbdefb'],    // Medium light blue
-                    [0.6, '#90caf9'],    // Medium blue
-                    [0.8, '#42a5f5'],    // Strong blue
-                    [1, '#1976d2']       // Deep blue for high values
-                ],
-                hoverongaps: false,
-                hovertemplate: 
-                    '<b>News Coverage:</b> %{y}<br>' +
-                    '<b>Funding Allocation:</b> %{x}<br>' +
-                    '<b>Correlation Score:</b> %{z:.2f}<br>' +
-                    '<extra></extra>',
-                showscale: true,
-                colorbar: {
-                    title: {
-                        text: 'Correlation<br>Score',
-                        side: 'right'
-                    },
-                    thickness: 15,
-                    len: 0.7
-                }
-            };
-            
-            const layout = {
-                title: {
-                    text: title,
-                    font: { size: 14, family: 'Inter' },
-                    pad: { t: 10 }
-                },
-                xaxis: {
-                    title: 'Funding Allocation (SDG)',
-                    tickangle: -45,
-                    tickfont: { size: 10 },
-                    side: 'bottom'
-                },
-                yaxis: {
-                    title: 'News Coverage (SDG)',
-                    tickfont: { size: 10 },
-                    autorange: 'reversed'
-                },
-                margin: { l: 80, r: 50, t: 60, b: 120 },
-                height: 500,
-                font: { family: 'Inter' }
-            };
-            
-            const config = {
-                responsive: true,
-                displayModeBar: false
-            };
-            
-            Plotly.newPlot(containerId, [trace], layout, config);
-        }
-
-        function updateNewsCharts() {
-            if (!newsData) return;
-            
-            // News coverage analysis
-            const categoryCounts = {};
-            newsData.forEach(article => {
-                const category = article.category || 'Unknown';
-                categoryCounts[category] = (categoryCounts[category] || 0) + 1;
-            });
-            
-            const newsTrace = {
-                labels: Object.keys(categoryCounts),
-                values: Object.values(categoryCounts),
-                type: 'pie'
-            };
-            
-            Plotly.newPlot('news-chart', [newsTrace], {
-                title: 'News Coverage by Category'
-            });
-        }
-
-        function updateODAPreview() {
-            if (!odaData) return;
-            
-            const tbody = document.querySelector('#oda-preview-table tbody');
-            tbody.innerHTML = odaData.slice(0, 10).map(project => `
-                <tr>
-                    <td>${project.project_title || 'N/A'}</td>
-                    <td>${project.year || 'N/A'}</td>
-                    <td>${project.recipient_name || 'N/A'}</td>
-                    <td>$${(parseFloat(project.usd_commitment) || 0).toLocaleString()}</td>
-                    <td>${project.sdg_focus ? createSDGBadge(project.sdg_focus, false) : 'N/A'}</td>
-                </tr>
-            `).join('');
-        }
-
-        function updateNewsPreview() {
-            if (!newsData) return;
-            
-            const tbody = document.querySelector('#news-preview-table tbody');
-            tbody.innerHTML = newsData.slice(0, 10).map(article => `
-                <tr>
-                    <td>${article.date || 'N/A'}</td>
-                    <td>${(article.title || 'N/A').substring(0, 50)}...</td>
-                    <td>${article.category || 'N/A'}</td>
-                    <td>${(article.keywords || 'N/A').substring(0, 30)}...</td>
-                </tr>
-            `).join('');
-        }
+        // Render SDG grid on main page load
+        renderSDGGrid();
     </script>
+    <script src="oda.js"></script>
 </body>
 </html>
